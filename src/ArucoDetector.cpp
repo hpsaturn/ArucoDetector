@@ -1,3 +1,4 @@
+// #include "Utils.h"
 #include <opencv2/imgproc.hpp>
 #include "ArucoDetector.h"
 
@@ -75,25 +76,38 @@ vector<vector<Point2f>> ArucoDetector::findSquares(Mat img) {
 	vector<vector<Point2f>> cand;
 
 	Mat thresh;
+	// threshold(img, thresh, 100, 255, THRESH_BINARY);
 	adaptiveThreshold(img, thresh, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 11, 5);
 
 	thresh = ~thresh;
 	vector<vector<Point>> cnts;
+	// findContours(thresh, cnts, RETR_LIST, CHAIN_APPROX_SIMPLE);
 	findContours(thresh, cnts, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+
+	cvtColor(thresh, thresh, COLOR_GRAY2BGR);
+	// drawContours(thresh, cnts, -1, Scalar(0, 0, 255));
 
 	vector<Point2f> cnt;
 	for (int i = 0; i < cnts.size(); ++i)
 	{
-		approxPolyDP(cnts[i], cnt, 0.05 * arcLength(cnts[i], true), true);
-		if (cnt.size() != 4 || contourArea(cnt) < 200 || !isContourConvex(cnt)) {
+		approxPolyDP(cnts[i], cnt, 0.025 * arcLength(cnts[i], true), true);
+		if (cnt.size() != 4 || contourArea(cnt) < 100 || contourArea(cnt) > 200|| !isContourConvex(cnt) ) {
 			continue;
 		}
 
 		cornerSubPix(img, cnt, Size(5, 5), Size(-1, -1), TERM_CRIT);
 
 		orderContour(cnt);
+		// circle(thresh, cnt[0], 2, Scalar(0, 0, 255), -1);
+		// circle(thresh, cnt[1], 2, Scalar(0, 255, 0), -1);
+		// circle(thresh, cnt[2], 2, Scalar(255, 0, 0), -1);
+		// circle(thresh, cnt[3], 2, Scalar(0, 255, 255), -1);
+		// Utils::drawSquareCenterText(thresh, cnt);
 		cand.push_back(cnt);
 	}
+	// Utils::drawStatusText(thresh, "Found " + to_string(cand.size()) + " squares", 10, 30);
+	// Utils::drawContoursFloat(thresh, cand);
+	// imshow("res", thresh);
 
 	return cand;
 }
